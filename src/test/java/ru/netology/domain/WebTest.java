@@ -1,162 +1,253 @@
 package ru.netology.domain;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
+import com.codeborne.selenide.ClickMethod;
+import com.codeborne.selenide.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.SearchContext;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.Keys;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.time.Duration;
+import java.time.LocalDate;
+
+
+import static com.codeborne.selenide.Condition.*;
+import static com.codeborne.selenide.Selectors.withText;
+import static com.codeborne.selenide.Selenide.*;
 
 public class WebTest {
-    private WebDriver driver;
-
-    @BeforeAll
-    public static void setUpAll() {
-        WebDriverManager.chromedriver().setup();
-
-    }
 
     @BeforeEach
     public void setUp() {
-        ChromeOptions options = new ChromeOptions();
-        options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--no-sandbox");
-        options.addArguments("--headless");
-        driver = new ChromeDriver(options);
-        driver.get("http://localhost:9999/");
+        LocalDate.of(2022, 03, 26);
+        Configuration.holdBrowserOpen = true;
+        open("http://localhost:9999/");
 
-    }
-
-    @AfterEach
-    public void tearDown() {
-        driver.quit();
-        driver = null;
     }
 
     @Test
-    public void shouldSendForm() {
-        driver.findElement(By.cssSelector("[type='text']")).sendKeys("Давид");
-        driver.findElement(By.cssSelector("[type='tel']")).sendKeys("+79993336666");
-        driver.findElement(By.cssSelector(".checkbox__text")).click();
-        driver.findElement(By.cssSelector("button")).click();
-        String actualText = driver.findElement(By.cssSelector("[data-test-id='order-success']")).getText().trim();
-        String expected = "Ваша заявка успешно отправлена! Наш менеджер свяжется с вами в ближайшее время.";
-        assertEquals(expected, actualText);
+    void shouldSendForm() {
+        $$x("//input[@type='text']").filter(visible).first().val("Новосибирск").pressTab();
+        $$x("//input[@type='tel']").exclude(hidden).first().sendKeys(Keys.DELETE, "31.03.2022");
+        $$x("//input[@type='text']").filter(visible).last().val("Ужакин Вадим");
+        $$x("//input[@type='tel']").exclude(hidden).last().val("+79993336666");
+        $("[data-test-id=agreement]").click();
+        $$(withText("Забронировать")).get(0).click();
+        $x("//*[contains(text(),'Встреча успешно')]").should(appear, Duration.ofSeconds(15));
+
     }
 
     @Test
-    public void shouldSendForm2() {
-        driver.findElement(By.cssSelector("[type='text']")).sendKeys("Михаил Салтыков-Щедрин");
-        driver.findElement(By.cssSelector("[type='tel']")).sendKeys("+79993336666");
-        driver.findElement(By.cssSelector(".checkbox__text")).click();
-        driver.findElement(By.cssSelector("button")).click();
-        String actualText = driver.findElement(By.cssSelector("[data-test-id='order-success']")).getText().trim();
-        String expected = "Ваша заявка успешно отправлена! Наш менеджер свяжется с вами в ближайшее время.";
-        assertEquals(expected, actualText);
+    void fieldTownEmpty() {
+        $$x("//input[@type='text']").filter(visible).first().val("").pressTab();
+        $$x("//input[@type='tel']").exclude(hidden).first().sendKeys(Keys.DELETE, "30.03.2022");
+        $$x("//input[@type='text']").filter(visible).last().val("Ужакин Вадим");
+        $$x("//input[@type='tel']").exclude(hidden).last().val("+79993336666");
+        $("[data-test-id=agreement]").click();
+        $$(withText("Забронировать")).get(0).click();
+        $x("//*[contains(text(),'Поле обязательно')]").should(appear, Duration.ofSeconds(15));
+
     }
 
     @Test
-    public void notSendFormFieldNameEmpty() {
-        driver.findElement(By.cssSelector("[type='text']")).sendKeys("");
-        driver.findElement(By.cssSelector("[type='tel']")).sendKeys("+79993336666");
-        driver.findElement(By.cssSelector(".checkbox__text")).click();
-        driver.findElement(By.cssSelector("button")).click();
-        String actualText = driver.findElement(By.cssSelector("[data-test-id='name'].input_invalid .input__sub")).getText().trim();
-        String expected = "Поле обязательно для заполнения";
-        assertEquals(expected, actualText);
+    void fieldsAllEmpty() {
+        $$x("//input[@type='text']").filter(visible).first().val("").pressTab();
+        $$x("//input[@type='tel']").exclude(hidden).first().sendKeys(Keys.DELETE);
+        $$x("//input[@type='text']").filter(visible).last().val("");
+        $$x("//input[@type='tel']").exclude(hidden).last().val("");
+        $$(withText("Забронировать")).get(0).click();
+        $x("//*[contains(text(),'Поле обязательно')]").should(appear, Duration.ofSeconds(15));
+
     }
 
     @Test
-    public void notSendFormInvalidFieldName1() {
-        driver.findElement(By.cssSelector("[type='text']")).sendKeys("David");
-        driver.findElement(By.cssSelector("[type='tel']")).sendKeys("+79993336666");
-        driver.findElement(By.cssSelector(".checkbox__text")).click();
-        driver.findElement(By.cssSelector("button")).click();
-        String actualText = driver.findElement(By.cssSelector("[data-test-id='name'].input_invalid .input__sub")).getText().trim();
-        String expected = "Имя и Фамилия указаные неверно. Допустимы только русские буквы, пробелы и дефисы.";
-        assertEquals(expected, actualText);
+    void fieldTownWrong() {
+        $$x("//input[@type='text']").filter(visible).first().val("Вадим").pressTab();
+        $$x("//input[@type='tel']").exclude(hidden).first().sendKeys(Keys.DELETE, "30.03.2022");
+        $$x("//input[@type='text']").filter(visible).last().val("Ужакин Вадим");
+        $$x("//input[@type='tel']").exclude(hidden).last().val("+79993336666");
+        $("[data-test-id=agreement]").click();
+        $$(withText("Забронировать")).get(0).click();
+        $x("//*[contains(text(),'Доставка в выбранный город недоступна')]").should(appear, Duration.ofSeconds(15));
+
     }
 
     @Test
-    public void notSendFormInvalidFieldName2() {
-        driver.findElement(By.cssSelector("[type='text']")).sendKeys("Анна_Мария");
-        driver.findElement(By.cssSelector("[type='tel']")).sendKeys("+79993336666");
-        driver.findElement(By.cssSelector(".checkbox__text")).click();
-        driver.findElement(By.cssSelector("button")).click();
-        String actualText = driver.findElement(By.cssSelector("[data-test-id='name'].input_invalid .input__sub")).getText().trim();
-        String expected = "Имя и Фамилия указаные неверно. Допустимы только русские буквы, пробелы и дефисы.";
-        assertEquals(expected, actualText);
+    void fieldTownWrong2() {
+        $$x("//input[@type='text']").filter(visible).first().val("Novosibirsk").pressTab();
+        $$x("//input[@type='tel']").exclude(hidden).first().sendKeys(Keys.DELETE, "30.03.2022");
+        $$x("//input[@type='text']").filter(visible).last().val("Ужакин Вадим");
+        $$x("//input[@type='tel']").exclude(hidden).last().val("+79993336666");
+        $("[data-test-id=agreement]").click();
+        $$(withText("Забронировать")).get(0).click();
+        $x("//*[contains(text(),'Доставка в выбранный город недоступна')]").should(appear, Duration.ofSeconds(15));
+
     }
 
     @Test
-    public void notSendFormInvalidFieldName3() {
-        driver.findElement(By.cssSelector("[type='text']")).sendKeys("+79993336666");
-        driver.findElement(By.cssSelector("[type='tel']")).sendKeys("+79993336666");
-        driver.findElement(By.cssSelector(".checkbox__text")).click();
-        driver.findElement(By.cssSelector("button")).click();
-        String actualText = driver.findElement(By.cssSelector("[data-test-id='name'].input_invalid .input__sub")).getText().trim();
-        String expected = "Имя и Фамилия указаные неверно. Допустимы только русские буквы, пробелы и дефисы.";
-        assertEquals(expected, actualText);
+    void fieldDataEmpty() {
+        $$x("//input[@type='text']").filter(visible).first().val("Кемерово").pressTab();
+        $$x("//input[@type='tel']").exclude(hidden).first().sendKeys(Keys.DELETE);
+        $$x("//input[@type='text']").filter(visible).last().val("Ужакин Вадим");
+        $$x("//input[@type='tel']").exclude(hidden).last().val("+79993336666");
+        $("[data-test-id=agreement]").click();
+        $$(withText("Забронировать")).get(0).click();
+        $x("//*[contains(text(),'Неверно введена дата')]").should(appear, Duration.ofSeconds(15));
+
     }
 
     @Test
-    public void notSendFormFieldTelephoneEmpty() {
-        driver.findElement(By.cssSelector("[type='text']")).sendKeys("Вадим");
-        driver.findElement(By.cssSelector("[type='tel']")).sendKeys("");
-        driver.findElement(By.cssSelector(".checkbox__text")).click();
-        driver.findElement(By.cssSelector("button")).click();
-        String actualText = driver.findElement(By.cssSelector("[data-test-id='phone'].input_invalid .input__sub")).getText().trim();
-        String expected = "Поле обязательно для заполнения";
-        assertEquals(expected, actualText);
+    void fieldDataCurrent() {
+        $$x("//input[@type='text']").filter(visible).first().val("Кемерово").pressTab();
+        $$x("//input[@type='tel']").exclude(hidden).first().sendKeys(Keys.DELETE, "26.03.2022");
+        $$x("//input[@type='text']").filter(visible).last().val("Ужакин Вадим");
+        $$x("//input[@type='tel']").exclude(hidden).last().val("+79993336666");
+        $("[data-test-id=agreement]").click();
+        $$(withText("Забронировать")).get(0).click();
+        $x("//*[contains(text(),'Заказ на выбранную дату невозможен')]").should(appear, Duration.ofSeconds(15));
+
     }
 
     @Test
-    public void notSendFormInvalidFieldTelephone1() {
-        driver.findElement(By.cssSelector("[type='text']")).sendKeys("Вадим");
-        driver.findElement(By.cssSelector("[type='tel']")).sendKeys("Вадим");
-        driver.findElement(By.cssSelector(".checkbox__text")).click();
-        driver.findElement(By.cssSelector("button")).click();
-        String actualText = driver.findElement(By.cssSelector("[data-test-id='phone'].input_invalid .input__sub")).getText().trim();
-        String expected = "Телефон указан неверно. Должно быть 11 цифр, например, +79012345678.";
-        assertEquals(expected, actualText);
+    void fieldDataWrong() {
+        $$x("//input[@type='text']").filter(visible).first().val("Кемерово").pressTab();
+        $$x("//input[@type='tel']").exclude(hidden).first().sendKeys(Keys.DELETE, "25.03.2022");
+        $$x("//input[@type='text']").filter(visible).last().val("Ужакин Вадим");
+        $$x("//input[@type='tel']").exclude(hidden).last().val("+79993336666");
+        $("[data-test-id=agreement]").click();
+        $$(withText("Забронировать")).get(0).click();
+        $x("//*[contains(text(),'Заказ на выбранную дату невозможен')]").should(appear, Duration.ofSeconds(15));
+
     }
 
     @Test
-    public void notSendFormInvalidFieldTelephone2() {
-        driver.findElement(By.cssSelector("[type='text']")).sendKeys("Вадим");
-        driver.findElement(By.cssSelector("[type='tel']")).sendKeys("+7(999)333-55-55");
-        driver.findElement(By.cssSelector(".checkbox__text")).click();
-        driver.findElement(By.cssSelector("button")).click();
-        String actualText = driver.findElement(By.cssSelector("[data-test-id='phone'].input_invalid .input__sub")).getText().trim();
-        String expected = "Телефон указан неверно. Должно быть 11 цифр, например, +79012345678.";
-        assertEquals(expected, actualText);
+    void fieldDataTrue() {
+        $$x("//input[@type='text']").filter(visible).first().val("Кемерово").pressTab();
+        $$x("//input[@type='tel']").exclude(hidden).first().sendKeys(Keys.DELETE, "30.03.2022");
+        $$x("//input[@type='text']").filter(visible).last().val("Ужакин Вадим");
+        $$x("//input[@type='tel']").exclude(hidden).last().val("+79993336666");
+        $("[data-test-id=agreement]").click();
+        $$(withText("Забронировать")).get(0).click();
+        $x("//*[contains(text(),'Встреча успешно забронирована')]").should(appear, Duration.ofSeconds(15));
+
     }
 
     @Test
-    public void notSendFormAllFieldsEmpty() {
-        driver.findElement(By.cssSelector("[type='text']")).sendKeys("");
-        driver.findElement(By.cssSelector("[type='tel']")).sendKeys("");
-        driver.findElement(By.cssSelector(".checkbox__text")).click();
-        driver.findElement(By.cssSelector("button")).click();
-        String actualText = driver.findElement(By.cssSelector("[data-test-id='name'].input_invalid .input__sub")).getText().trim();
-        String expected = "Поле обязательно для заполнения";
-        assertEquals(expected, actualText);
+    void fieldFamilyAndNameEmpty() {
+        $$x("//input[@type='text']").filter(visible).first().val("Кемерово").pressTab();
+        $$x("//input[@type='tel']").exclude(hidden).first().sendKeys(Keys.DELETE, "30.03.2022");
+        $$x("//input[@type='text']").filter(visible).last().val("");
+        $$x("//input[@type='tel']").exclude(hidden).last().val("+79993336666");
+        $("[data-test-id=agreement]").click();
+        $$(withText("Забронировать")).get(0).click();
+        $x("//*[contains(text(),'Поле обязательно')]").should(appear, Duration.ofSeconds(15));
+
     }
 
     @Test
-    public void notSendFormAllFieldCheckBoxNotClick() {
-        driver.findElement(By.cssSelector("[type='text']")).sendKeys("Давид");
-        driver.findElement(By.cssSelector("[type='tel']")).sendKeys("+79993336666");
-        driver.findElement(By.cssSelector("button")).click();
-        String actualText = driver.findElement(By.cssSelector("[data-test-id='agreement'].input_invalid .checkbox__text")).getText().trim();
-        String expected = "Я соглашаюсь с условиями обработки и использования моих персональных данных и разрешаю сделать запрос в бюро кредитных историй";
-        assertEquals(expected, actualText);
+    void fieldFamilyAndNameTrue() {
+        $$x("//input[@type='text']").filter(visible).first().val("Кемерово").pressTab();
+        $$x("//input[@type='tel']").exclude(hidden).first().sendKeys(Keys.DELETE, "30.03.2022");
+        $$x("//input[@type='text']").filter(visible).last().val("Вадим");
+        $$x("//input[@type='tel']").exclude(hidden).last().val("+79993336666");
+        $("[data-test-id=agreement]").click();
+        $$(withText("Забронировать")).get(0).click();
+        $x("//*[contains(text(),'Встреча успешно забронирована')]").should(appear, Duration.ofSeconds(15));
+
+    }
+
+    @Test
+    void fieldFamilyAndNameTrue2() {
+        $$x("//input[@type='text']").filter(visible).first().val("Кемерово").pressTab();
+        $$x("//input[@type='tel']").exclude(hidden).first().sendKeys(Keys.DELETE, "30.03.2022");
+        $$x("//input[@type='text']").filter(visible).last().val("Салтыков-Щедрин");
+        $$x("//input[@type='tel']").exclude(hidden).last().val("+79993336666");
+        $("[data-test-id=agreement]").click();
+        $$(withText("Забронировать")).get(0).click();
+        $x("//*[contains(text(),'Встреча успешно забронирована')]").should(appear, Duration.ofSeconds(15));
+
+    }
+
+    @Test
+    void fieldFamilyAndNameWrong() {
+        $$x("//input[@type='text']").filter(visible).first().val("Кемерово").pressTab();
+        $$x("//input[@type='tel']").exclude(hidden).first().sendKeys(Keys.DELETE, "30.03.2022");
+        $$x("//input[@type='text']").filter(visible).last().val("Салтыков_Щедрин");
+        $$x("//input[@type='tel']").exclude(hidden).last().val("+79993336666");
+        $("[data-test-id=agreement]").click();
+        $$(withText("Забронировать")).get(0).click();
+        $x("//*[contains(text(),'Имя и Фамилия указаные неверно. Допустимы только русские буквы, пробелы и дефисы.')]").should(appear, Duration.ofSeconds(15));
+
+    }
+
+    @Test
+    void fieldFamilyAndNameWrong2() {
+        $$x("//input[@type='text']").filter(visible).first().val("Кемерово").pressTab();
+        $$x("//input[@type='tel']").exclude(hidden).first().sendKeys(Keys.DELETE, "30.03.2022");
+        $$x("//input[@type='text']").filter(visible).last().val("Vadim");
+        $$x("//input[@type='tel']").exclude(hidden).last().val("+79993336666");
+        $("[data-test-id=agreement]").click();
+        $$(withText("Забронировать")).get(0).click();
+        $x("//*[contains(text(),'Имя и Фамилия указаные неверно. Допустимы только русские буквы, пробелы и дефисы.')]").should(appear, Duration.ofSeconds(15));
+
+    }
+
+    @Test
+    void fieldPhoneEmpty() {
+        $$x("//input[@type='text']").filter(visible).first().val("Кемерово").pressTab();
+        $$x("//input[@type='tel']").exclude(hidden).first().sendKeys(Keys.DELETE, "30.03.2022");
+        $$x("//input[@type='text']").filter(visible).last().val("Салтыков-Щедрин");
+        $$x("//input[@type='tel']").exclude(hidden).last().val("");
+        $("[data-test-id=agreement]").click();
+        $$(withText("Забронировать")).get(0).click();
+        $x("//*[contains(text(),'Поле обязательно для заполнения')]").should(appear, Duration.ofSeconds(15));
+
+    }
+
+    @Test
+    void fieldPhoneWrong() {
+        $$x("//input[@type='text']").filter(visible).first().val("Кемерово").pressTab();
+        $$x("//input[@type='tel']").exclude(hidden).first().sendKeys(Keys.DELETE, "30.03.2022");
+        $$x("//input[@type='text']").filter(visible).last().val("Салтыков-Щедрин");
+        $$x("//input[@type='tel']").exclude(hidden).last().val("79993336666");
+        $("[data-test-id=agreement]").click();
+        $$(withText("Забронировать")).get(0).click();
+        $x("//*[contains(text(),'Телефон указан неверно. Должно быть 11 цифр, например, +79012345678.')]").should(appear, Duration.ofSeconds(15));
+
+    }
+
+    @Test
+    void fieldPhoneWrong2() {
+        $$x("//input[@type='text']").filter(visible).first().val("Кемерово").pressTab();
+        $$x("//input[@type='tel']").exclude(hidden).first().sendKeys(Keys.DELETE, "30.03.2022");
+        $$x("//input[@type='text']").filter(visible).last().val("Салтыков-Щедрин");
+        $$x("//input[@type='tel']").exclude(hidden).last().val("+7999333666");
+        $("[data-test-id=agreement]").click();
+        $$(withText("Забронировать")).get(0).click();
+        $x("//*[contains(text(),'Телефон указан неверно. Должно быть 11 цифр, например, +79012345678.')]").should(appear, Duration.ofSeconds(15));
+
+    }
+
+    @Test
+    void fieldCheckBoxNotValue() {
+        $$x("//input[@type='text']").filter(visible).first().val("Кемерово").pressTab();
+        $$x("//input[@type='tel']").exclude(hidden).first().sendKeys(Keys.DELETE, "30.03.2022");
+        $$x("//input[@type='text']").filter(visible).last().val("Салтыков-Щедрин");
+        $$x("//input[@type='tel']").exclude(hidden).last().val("+79993336666");
+        $$(withText("Забронировать")).get(0).click();
+        $x("//*[contains(text(),'Я соглашаюсь с условиями обработки и использования моих персональных данных')]").should(appear, Duration.ofSeconds(15));
+
+    }
+
+    @Test
+    void shouldSubmitRequest() {
+        $$x("//input[@type='text']").filter(visible).first().val("ке").sendKeys(Keys.DOWN, Keys.DOWN, Keys.ENTER);
+        $$x("//input[@type='tel']").exclude(hidden).first().sendKeys(Keys.ARROW_DOWN, Keys.ARROW_RIGHT, Keys.ARROW_RIGHT, Keys.ARROW_RIGHT, Keys.ARROW_RIGHT);
+        $$x("//input[@type='text']").filter(visible).last().val("Ужакин Вадим");
+        $$x("//input[@type='tel']").exclude(hidden).last().val("+79993336666");
+        $("[data-test-id=agreement]").click();
+        $$(withText("Забронировать")).get(0).click();
+        $x("//*[contains(text(),'Встреча успешно')]").should(appear, Duration.ofSeconds(15));
+
     }
 
 }
