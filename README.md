@@ -1,0 +1,1 @@
+# CI Project [![Build status](https://ci.appveyor.com/api/projects/status/w0l06tn6q9k12105?svg=true)](https://ci.appveyor.com/project/Vavlauz/testweb1)
