@@ -261,7 +261,6 @@ public class WebTest {
 
     @Test
     void shouldSubmitComplexRequest() {
-        String planningDate = generateDate(7);
         LocalDate dateOfMeeting = LocalDate.now().plusDays(7);
         String dateOfMeetingFormatted = dateOfMeeting.format(ofPattern("dd.MM.yyyy"));
         $("[data-test-id='city'] input").val("ке");
