@@ -261,12 +261,15 @@ public class WebTest {
 
     @Test
     void shouldSubmitComplexRequest() {
-        LocalDate dateOfMeeting = LocalDate.now().plusDays(7);
-        String dateOfMeetingFormatted = dateOfMeeting.format(ofPattern("dd.MM.yyyy"));
         $("[data-test-id='city'] input").val("ке");
         $(".input__menu").find(withText("Кемерово")).click();
         $("[placeholder='Дата встречи']").sendKeys(chord(Keys.SHIFT, Keys.HOME), Keys.BACK_SPACE);
-        $(".calendar__arrow_direction_right[data-step='1']").click();
+        LocalDate startDate = LocalDate.now().plusDays(3);
+        LocalDate dateOfMeeting = LocalDate.now().plusDays(7);
+        String dateOfMeetingFormatted = dateOfMeeting.format(ofPattern("dd.MM.yyyy"));
+        if (startDate.getMonthValue() != dateOfMeeting.getMonthValue()) {
+            $(".calendar__arrow_direction_right[data-step='1']").click();
+        }
         $$("td.calendar__day").find(exactText(String.valueOf(dateOfMeeting.getDayOfMonth()))).click();
         $("[data-test-id='name'] input").val("Ужакин Вадим");
         $("[data-test-id='phone'] input").val("+79993336666");
